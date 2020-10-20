@@ -9,6 +9,7 @@ from torchvision import transforms
 from torchvision.datasets import MNIST
 from torchvision.utils import save_image
 import numpy as np
+from tqdm import tqdm
 
 def to_img(x):
     x = 0.5 * (x + 1)
@@ -71,26 +72,50 @@ class autoencoder(nn.Module):
         x = self.decoder(x)
         return x
 
-def test_image_reconstruction(net1, testloader):
-    for batch in testloader:
-        img, image_label = batch
-        img = img.to(device)
-        img = img.view(img.size(0), -1)
-        outputs1 = net1(img)
-        for l in range(128):
-            if image_label[l]==1:
-                print(l)
-                print(outputs1[l])
-                print(outputs1[l].shape)
+def test_image_reconstruction(testloader):
+    for net_index in range(1,11):
+        model=autoencoder()
+        model.load_state_dict(torch.load('./weight/ae_for_number_{}.pth'.format(net_index)))
+        for batch_index,batch in enumerate(testloader):
+            if(batch_index==1):
+                img, image_label = batch
+                # img = img.to(device)
+                img = img.view(img.size(0), -1)
+                outputs1 = model(img)
+                # outputs2 = net2(img)
+                outputs1 = outputs1.view(outputs1.size(0), 1, 28, 28).cpu().data
+                # outputs2 = outputs2.view(outputs2.size(0), 1, 28, 28).cpu().data
+                save_image(outputs1, './test/net_{}_batch_{}.png'.format(net_index,batch_index))
+                # save_image(outputs2, './test/{}_reconstruction.png'.format('cat'))
+                img = img.view(img.size(0), 1, 28, 28).cpu().data
+                save_image(img, './test/net_{}_raw.png'.format(net_index))
 
-        # outputs2 = net2(img)
-        outputs1 = outputs1.view(outputs1.size(0), 1, 28, 28).cpu().data
-        # outputs2 = outputs2.view(outputs2.size(0), 1, 28, 28).cpu().data
-        save_image(outputs1, './test/{}_reconstruction.png'.format('test'))
-        # save_image(outputs2, './test/{}_reconstruction.png'.format('cat'))
-        img = img.view(img.size(0), 1, 28, 28).cpu().data
-        save_image(img, './test/raw.png')
-        break
+
+def test_single_img(testloader):
+    all_batch_output=torch.ones(11,784)
+    for batch_index,batch in (enumerate(tqdm(testloader))):
+
+        img, image_label = batch
+        img = img.view(img.size(0), -1)
+        # print(img.shape)
+        all_net_output=torch.zeros(11,784)
+        for net_index in range(11):
+            model=autoencoder()
+            model.load_state_dict(torch.load('./weight/ae_for_number_{}.pth'.format(net_index)))
+            output=model(img[0])
+            all_net_output[net_index]=output
+        all_net_output[10]=img[0]
+        # all_net_output[11]=torch.ones(784)
+        all_batch_output=torch.cat((all_batch_output,all_net_output),0)
+        
+        all_net_output = all_net_output.view(11, 1, 28, 28).cpu().data
+        save_image(all_net_output, './test/single_img_input_batch_{}.png'.format(batch_index))
+    all_batch_output = all_batch_output.view(all_batch_output.shape[0], 1, 28, 28).cpu().data
+    save_image(all_batch_output, './test/78output.png',nrow=11)
+
+
+
+
 def test_output(net_list,testloader):
     for batch in testloader:
         img, img_label = batch
@@ -116,25 +141,28 @@ def single_net_output(net,batch):
     for batch_index in range(img_label.shape[0]):
         output=net(img[batch_index])
         net_score[batch_index]=torch.sum(output)
-    return net_score
+    return net_score,output
+
 def all_net_output(testloader):
     batch_accuracy=[]
     for batch in testloader:
         img, img_label = batch
         # img = img.to(device)
         img = img.view(img.size(0), -1)
-        score=torch.zeros(img_label.shape[0],10)
-        for net_index in range(1,11):
+        score=torch.zeros(img_label.shape[0],11)
+
+        reconstruction=torch.zeros(img_label.shape[0],784)
+        for net_index in range(11):
             model=autoencoder()
             model.load_state_dict(torch.load('./weight/ae_for_number_{}.pth'.format(net_index)))
             # model.to(device)
-            singel_score=single_net_output(model,batch)
+            singel_score,single_output=single_net_output(model,batch)
             # print("single_net shape: ",singel_score.shape)
             # gg=score[:,net_index-1]
             # print(gg.shape)
-            score[:,net_index-1]=singel_score
+            score[:,net_index]=singel_score
         model_result=torch.argmax(score,axis=1)
-        model_result+=1
+        # model_result+=1
         # model_result=model_result.to(dtype=int)
         model_result=model_result.int()
         ground_truth=img_label
@@ -145,11 +173,27 @@ def all_net_output(testloader):
         batch_acc=(torch.mean(tmp))
         batch_accuracy.append(batch_acc)
         print(batch_acc)
+
+        # outputs1 = outputs1.view(outputs1.size(0), 1, 28, 28).cpu().data
+
+
     return batch_accuracy
     # return np.mean(acc)
 # device = get_device()
-batch_accuracy=all_net_output(testloader)
-print(np.mean(batch_accuracy))
+
+#view output for single input
+test_single_img(testloader)
+print("finish 1")
+# #view one batch output for a single net
+# test_image_reconstruction(testloader)
+
+
+# #print accuracy on testset
+# batch_accuracy=all_net_output(testloader)
+# print(np.mean(batch_accuracy))
+
+
+
 # test with old output
 # net_list={}
 

@@ -71,7 +71,7 @@ device = get_device()
 
 
 
-train_l_set=[i for i in range(1,11)]
+train_l_set=[i for i in range(11)]
 
 for training_ae_label in train_l_set:
 
