@@ -219,4 +219,3 @@ print("finish 1")
 # batch_accuracy=all_net_output(testloader)
 # print(np.mean(batch_accuracy))
 
-
