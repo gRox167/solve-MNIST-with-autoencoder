@@ -118,7 +118,7 @@ attackAcc ={'L0SAPA':fb.attacks.SaltAndPepperNoiseAttack(),
 
 for key,attack in attackZooL0.items():
     if attack!=None:
-        raw, clipped, is_adv = attack(fmodel,imagesVectors,labels,epsilons=0.03)
+        raw, clipped, is_adv = attack(fmodel,imagesVectors,labels,epsilons=1.5)
         robust_accuracy = 1 - is_adv.to(torch.float32).mean(axis=-1)
         attackAcc[key] = robust_accuracy
         print(key)
@@ -134,7 +134,7 @@ for key,attack in attackZooL2.items():
 
 for key,attack in attackZooLinf.items():
     if attack!=None:
-        raw, clipped, is_adv = attack(fmodel,imagesVectors,labels,epsilons=0.03)
+        raw, clipped, is_adv = attack(fmodel,imagesVectors,labels,epsilons=12)
         robust_accuracy = 1 - is_adv.to(torch.float32).mean(axis=-1)
         attackAcc[key] = robust_accuracy
         print(key)

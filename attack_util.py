@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from torch import nn
 import torchvision
-
+from torchvision.datasets import MNIST
 # from abs_models import utils as u
 # from abs_models import models
 

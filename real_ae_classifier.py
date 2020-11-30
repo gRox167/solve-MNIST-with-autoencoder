@@ -1,5 +1,6 @@
 import os
 
+import foolbox
 import torch
 import torchvision
 from torch import nn
@@ -128,4 +129,3 @@ for training_ae_label in train_l_set:
 
     torch.save(model.state_dict(), './weight/ae_for_number_{}.pth'.format(training_ae_label))
     # torch.save(model.encoder.state_dict(), './weight/encoder_part_weight.pth')
-
